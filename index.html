@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Microservicios GCP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1,
+        h2 {
+            color: #0056b3;
+            text-align: center;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #fafafa;
+        }
+        
+        .buttons-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-django {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-django:hover {
+            background-color: #45a049;
+        }
+        
+        .btn-java {
+            background-color: #008CBA;
+            color: white;
+        }
+        
+        .btn-java:hover {
+            background-color: #007bb5;
+        }
+        
+        .status-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            color: #495057;
+            white-space: pre-wrap;
+            /* Para preservar saltos de línea */
+            font-family: 'Courier New', Courier, monospace;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+        }
+        
+        .alert {
+            background-color: #ffdddd;
+            border-left: 6px solid #f44336;
+        }
+        
+        .success {
+            background-color: #ddffdd;
+            border-left: 6px solid #04AA6D;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+        
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        .spoofing-detected {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Dashboard de Microservicios en GCP</h1>
+
+        <div class="section">
+            <h2>Microservicios Django (Simulación)</h2>
+            <div class="buttons-group">
+                <button class="btn-django" onclick="callDjangoService('django-service-1')">Llamar Django Service 1</button>
+                <button class="btn-django" onclick="callDjangoService('django-service-2')">Llamar Django Service 2</button>
+            </div>
+            <div id="djangoStatus" class="status-message"></div>
+        </div>
+
+        <div class="section">
+            <h2>Microservicio de Seguridad Java (Anti-Spoofing)</h2>
+            <div class="buttons-group">
+                <button class="btn-java" onclick="startJavaMonitoring()">Iniciar Monitoreo Spoofing (1 min)</button>
+                <button class="btn-java" onclick="stopJavaMonitoring()">Detener Monitoreo</button>
+                <button class="btn-java" onclick="getJavaLatestResults()">Ver Últimos Resultados</button>
+                <button class="btn-java" onclick="getJavaStatistics()">Ver Estadísticas Spoofing</button>
+            </div>
+            <div id="javaStatus" class="status-message"></div>
+
+            <h3>Historial de Monitoreo</h3>
+            <table id="monitoringResultsTable">
+                <thead>
+                    <tr>
+                        <th>Microservicio</th>
+                        <th>Timestamp</th>
+                        <th>Detección Spoofing</th>
+                        <th>Mensaje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+
+            <h3>Estadísticas de Detección</h3>
+            <div id="statisticsDisplay" class="status-message"></div>
+        </div>
+    </div>
+
+    <script>
+        const JAVA_SERVICE_URL = 'http://localhost:8081/api/v1/monitor'; // Puerto de tu servicio Java
+        const DJANGO_SERVICE_1_URL = 'http://localhost:8000/status/'; // Puerto de tu Django Service 1
+        const DJANGO_SERVICE_2_URL = 'http://localhost:8001/status/'; // Puerto de tu Django Service 2
+
+        async function callDjangoService(serviceName) {
+            const statusDiv = document.getElementById('djangoStatus');
+            statusDiv.textContent = `Llamando a ${serviceName}...`;
+            statusDiv.className = 'status-message'; // Resetear clases
+
+            let serviceUrl = '';
+            if (serviceName === 'django-service-1') {
+                serviceUrl = DJANGO_SERVICE_1_URL;
+            } else if (serviceName === 'django-service-2') {
+                serviceUrl = DJANGO_SERVICE_2_URL;
+            } else {
+                statusDiv.textContent = 'Servicio Django desconocido.';
+                return;
+            }
+
+            try {
+                const response = await fetch(serviceUrl);
+                const data = await response.json();
+                statusDiv.textContent = `Respuesta de ${serviceName}:\n${JSON.stringify(data, null, 2)}`;
+                if (response.ok) {
+                    statusDiv.classList.add('success');
+                } else {
+                    statusDiv.classList.add('alert');
+                }
+            } catch (error) {
+                statusDiv.textContent = `Error al llamar a ${serviceName}: ${error.message}`;
+                statusDiv.classList.add('alert');
+                console.error(`Error al llamar a ${serviceName}:`, error);
+            }
+        }
+
+        async function startJavaMonitoring() {
+            const statusDiv = document.getElementById('javaStatus');
+            statusDiv.textContent = 'Iniciando monitoreo de spoofing...';
+            statusDiv.className = 'status-message';
+
+            try {
+                const response = await fetch(`${JAVA_SERVICE_URL}/start`);
+                const message = await response.text();
+                statusDiv.textContent = `Monitoreo Java: ${message}`;
+                if (response.ok) {
+                    statusDiv.classList.add('success');
+                } else {
+                    statusDiv.classList.add('alert');
+                }
+                // Después de iniciar, podemos empezar a refrescar los resultados
+                setTimeout(getJavaLatestResults, 1000); // Dar un segundo para la primera revisión
+                setInterval(getJavaLatestResults, 5000); // Refrescar resultados cada 5 segundos
+                setInterval(getJavaStatistics, 5000); // Refrescar estadísticas cada 5 segundos
+            } catch (error) {
+                statusDiv.textContent = `Error al iniciar monitoreo Java: ${error.message}`;
+                statusDiv.classList.add('alert');
+                console.error('Error al iniciar monitoreo Java:', error);
+            }
+        }
+
+        async function stopJavaMonitoring() {
+            const statusDiv = document.getElementById('javaStatus');
+            statusDiv.textContent = 'Deteniendo monitoreo de spoofing...';
+            statusDiv.className = 'status-message';
+
+            try {
+                const response = await fetch(`${JAVA_SERVICE_URL}/stop`);
+                const message = await response.text();
+                statusDiv.textContent = `Monitoreo Java: ${message}`;
+                if (response.ok) {
+                    statusDiv.classList.add('success');
+                } else {
+                    statusDiv.classList.add('alert');
+                }
+            } catch (error) {
+                statusDiv.textContent = `Error al detener monitoreo Java: ${error.message}`;
+                statusDiv.classList.add('alert');
+                console.error('Error al detener monitoreo Java:', error);
+            }
+        }
+
+        async function getJavaLatestResults() {
+            const statusDiv = document.getElementById('javaStatus');
+            try {
+                const response = await fetch(`${JAVA_SERVICE_URL}/latest-results`);
+                const results = await response.json();
+                displayMonitoringResults(results);
+            } catch (error) {
+                statusDiv.textContent = `Error al obtener resultados de monitoreo Java: ${error.message}`;
+                statusDiv.classList.add('alert');
+                console.error('Error al obtener resultados de monitoreo Java:', error);
+            }
+        }
+
+        function displayMonitoringResults(results) {
+            const tableBody = document.querySelector('#monitoringResultsTable tbody');
+            tableBody.innerHTML = ''; // Limpiar resultados anteriores
+
+            if (results && results.length > 0) {
+                results.forEach(result => {
+                    const row = tableBody.insertRow();
+                    const microserviceCell = row.insertCell();
+                    const timestampCell = row.insertCell();
+                    const spoofingDetectedCell = row.insertCell();
+                    const messageCell = row.insertCell();
+
+                    microserviceCell.textContent = result.microserviceName;
+                    timestampCell.textContent = new Date(result.timestamp).toLocaleString();
+                    spoofingDetectedCell.textContent = result.spoofingDetected ? 'Sí' : 'No';
+                    messageCell.textContent = result.message;
+
+                    if (result.spoofingDetected) {
+                        row.classList.add('spoofing-detected');
+                    }
+                });
+            } else {
+                const row = tableBody.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 4;
+                cell.textContent = 'No hay resultados de monitoreo aún.';
+                cell.style.textAlign = 'center';
+            }
+        }
+
+        async function getJavaStatistics() {
+            const statisticsDiv = document.getElementById('statisticsDisplay');
+            statisticsDiv.className = 'status-message'; // Resetear clases
+            try {
+                const response = await fetch(`${JAVA_SERVICE_URL}/statistics`);
+                const stats = await response.json();
+                statisticsDiv.innerHTML = `
+                    <p><strong>Estadísticas de Detección de Spoofing:</strong></p>
+                    <p>Total de Chequeos Realizados: ${stats.totalChecks}</p>
+                    <p>Detecciones de Spoofing: ${stats.spoofingDetections}</p>
+                    <p>Tasa de Detección (eventos/chequeos): ${stats.detectionRatePercentage.toFixed(2)}%</p>
+                    <p>Eficacia del Detector de Seguridad: ${stats.detectorEfficiencyPercentage.toFixed(2)}%</p>
+                `;
+                statisticsDiv.classList.add('success');
+            } catch (error) {
+                statisticsDiv.textContent = `Error al obtener estadísticas de Java: ${error.message}`;
+                statisticsDiv.classList.add('alert');
+                console.error('Error al obtener estadísticas de Java:', error);
+            }
+        }
+    </script>
+</body>
+
+</html>
