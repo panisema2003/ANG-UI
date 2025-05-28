@@ -3,7 +3,7 @@
 // de tus microservicios a través de Kong, incluyendo el puerto 8000 de Kong.
 // Asumiendo la IP externa de Kong es 34.27.77.137 y puerto 8000:
 
-const KONG_IP_EXTERNA = '34.55.80.240'; // La IP externa de tu instancia de Kong
+const KONG_IP_EXTERNA = '34.55.80.240'; // TODO: cambiar si cambia La IP externa de tu instancia de Kong
 const KONG_PORT = '8000'; // Puerto proxy de Kong
 
 // Actualiza estas URLs para apuntar a Kong con las rutas que definiste en kong.yaml
